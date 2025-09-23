@@ -869,15 +869,7 @@ def cmdLineParser(argv=None):
         parser.add_argument("--disable-json", dest="disableJson", action="store_true",
             help=SUPPRESS)
 
-        # API options
-        parser.add_argument("--api", dest="api", action="store_true",
-            help=SUPPRESS)
 
-        parser.add_argument("--taskid", dest="taskid",
-            help=SUPPRESS)
-
-        parser.add_argument("--database", dest="database",
-            help=SUPPRESS)
 
         # Dirty hack to display longer options without breaking into two lines
         if hasattr(parser, "formatter"):
@@ -1108,7 +1100,7 @@ def cmdLineParser(argv=None):
         if args.dummy:
             args.url = args.url or DUMMY_URL
 
-        if hasattr(sys.stdin, "fileno") and not any((os.isatty(sys.stdin.fileno()), args.api, args.ignoreStdin, "GITHUB_ACTIONS" in os.environ)):
+        if hasattr(sys.stdin, "fileno") and not any((os.isatty(sys.stdin.fileno()), args.ignoreStdin, "GITHUB_ACTIONS" in os.environ)):
             args.stdinPipe = iter(sys.stdin.readline, None)
         else:
             args.stdinPipe = None

@@ -372,7 +372,7 @@ OBSOLETE_OPTIONS = {
     "--sqlmap-shell": "use '--shell' instead",
     "--check-payload": None,
     "--check-waf": None,
-    "--pickled-options": "use '--api -c ...' instead",
+
     "--identify-waf": "functionality being done automatically",
 }
 
