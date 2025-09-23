@@ -95,12 +95,12 @@ def _goInference(payload, expression, charsetType=None, firstChar=None, lastChar
 
     timeBasedCompare = (getTechnique() in (PAYLOAD.TECHNIQUE.TIME, PAYLOAD.TECHNIQUE.STACKED))
 
+    # OVERCLOCKED: Force threads for time-based injections (remove safety warning)
     if timeBasedCompare and conf.threads > 1 and kb.forceThreads is None:
-        msg = "multi-threading is considered unsafe in "
-        msg += "time-based data retrieval. Are you sure "
-        msg += "of your choice (breaking warranty) [y/N] "
-
-        kb.forceThreads = readInput(msg, default='N', boolean=True)
+        # Auto-enable threading for maximum performance (breaking warranty for speed)
+        kb.forceThreads = True
+        infoMsg = "OVERCLOCKED: Auto-enabling multi-threading for time-based injections for maximum speed"
+        logger.info(infoMsg)
 
     if not (timeBasedCompare and kb.dnsTest):
         if (conf.eta or conf.threads > 1) and Backend.getIdentifiedDbms() and not re.search(r"(COUNT|LTRIM)\(", expression, re.I) and not (timeBasedCompare and not kb.forceThreads):

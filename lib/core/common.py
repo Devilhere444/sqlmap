@@ -3548,17 +3548,110 @@ def isInferenceAvailable():
 
 def setOptimize():
     """
-    Sets options turned on by switch '-o'
+    Sets options turned on by switch '-o' - OVERCLOCKED VERSION
     """
 
-    # conf.predictOutput = True
+    # Enable output prediction for faster response analysis
+    conf.predictOutput = True
     conf.keepAlive = True
-    conf.threads = 3 if conf.threads < 3 and cmdLineOptions.threads is None else conf.threads
+    
+    # OVERCLOCKED: Use maximum threads (100) instead of just 3
+    conf.threads = 100 if cmdLineOptions.threads is None else conf.threads
+    
+    # Enable null connection for faster page length retrieval
     conf.nullConnection = not any((conf.data, conf.textOnly, conf.titles, conf.string, conf.notString, conf.regexp, conf.tor))
+    
+    # OVERCLOCKED: Additional aggressive optimizations
+    if conf.timeSec > 1:
+        conf.timeSec = 1  # Force minimal time delay for time-based injections
+    if conf.timeout > 10:
+        conf.timeout = 10  # Force shorter timeouts
+    if conf.retries > 1:
+        conf.retries = 1   # Minimal retries for faster failure handling
+    if conf.delay > 0:
+        conf.delay = 0     # Remove any artificial delays
 
     if not conf.nullConnection:
         debugMsg = "turning off switch '--null-connection' used indirectly by switch '-o'"
         logger.debug(debugMsg)
+
+def setOverclock():
+    """
+    OVERCLOCK MODE: Maximum performance settings (--overclock)
+    """
+    
+    infoMsg = "OVERCLOCK MODE activated - maximum performance with aggressive settings"
+    logger.info(infoMsg)
+    
+    # Apply all standard optimizations first
+    setOptimize()
+    
+    # MAXIMUM THREADING
+    conf.threads = 100
+    
+    # AGGRESSIVE TIMING SETTINGS
+    conf.timeSec = 1        # Minimum time delay for time-based injections
+    conf.timeout = 5        # Very short timeout
+    conf.retries = 1        # Single retry only
+    conf.delay = 0          # No artificial delays
+    
+    # FORCE DANGEROUS OPTIMIZATIONS
+    conf.predictOutput = True
+    conf.keepAlive = True
+    conf.nullConnection = True  # Force null connection
+    
+    # DISABLE SAFETY FEATURES FOR SPEED
+    kb.forceThreads = True  # Force threading for time-based injections
+    
+    # ADDITIONAL SPEED OPTIMIZATIONS
+    conf.safeFreq = 0       # No safe URL frequency
+    conf.csrfRetries = 0    # No CSRF retries
+    
+    warnMsg = "OVERCLOCK MODE: Safety features disabled for maximum speed. "
+    warnMsg += "Use at your own risk!"
+    logger.warning(warnMsg)
+
+def setTurbo():
+    """
+    TURBO MODE: Extreme overclocking for maximum speed at all costs (--turbo)
+    """
+    
+    infoMsg = "TURBO MODE activated - EXTREME overclocking with all safety features disabled"
+    logger.info(infoMsg)
+    
+    # Apply overclock settings first
+    setOverclock()
+    
+    # EXTREME SETTINGS - DANGER ZONE
+    conf.threads = 200        # Double the overclock thread count
+    conf.timeSec = 0.5        # Even faster time-based detection
+    conf.timeout = 3          # Extremely short timeout
+    conf.delay = 0            # Absolutely no delays
+    conf.retries = 0          # No retries at all - fail fast
+    
+    # AGGRESSIVE LEVEL AND RISK
+    if not hasattr(conf, 'level') or conf.level < 3:
+        conf.level = 3        # Higher test level for thorough but fast testing
+    if not hasattr(conf, 'risk') or conf.risk < 2:  
+        conf.risk = 2         # Higher risk for more injection attempts
+    
+    # FORCE ALL OPTIMIZATIONS
+    conf.predictOutput = True
+    conf.keepAlive = True
+    conf.nullConnection = True
+    conf.eta = True           # Show ETA for faster feedback
+    
+    # BYPASS ALL SAFETY MECHANISMS
+    kb.forceThreads = True
+    kb.skipOthers = True      # Skip redundant tests
+    
+    # EXTREME PERFORMANCE SETTINGS
+    conf.safeFreq = 0
+    conf.csrfRetries = 0
+    
+    warnMsg = "TURBO MODE: ALL SAFETY FEATURES DISABLED! Using 200 threads with "
+    warnMsg += "extremely aggressive settings. Use only on isolated test environments!"
+    logger.critical(warnMsg)
 
 def saveConfig(conf, filename):
     """
