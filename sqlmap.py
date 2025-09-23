@@ -158,17 +158,7 @@ def main():
         if checkPipedInput():
             conf.batch = True
 
-        if conf.get("api"):
-            # heavy imports
-            from lib.utils.api import StdDbOut
-            from lib.utils.api import setRestAPILog
 
-            # Overwrite system standard output and standard error to write
-            # to an IPC database
-            sys.stdout = StdDbOut(conf.taskid, messagetype="stdout")
-            sys.stderr = StdDbOut(conf.taskid, messagetype="stderr")
-
-            setRestAPILog()
 
         conf.showTime = True
         dataToStdout("[!] legal disclaimer: %s\n\n" % LEGAL_DISCLAIMER, forceOutput=True)

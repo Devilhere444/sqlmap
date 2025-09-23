@@ -314,36 +314,26 @@ class Format(object):
         """
 
         infoStr = ""
-        infoApi = {}
 
         if info and "type" in info:
-            if conf.api:
-                infoApi["%s operating system" % target] = info
-            else:
-                infoStr += "%s operating system: %s" % (target, Format.humanize(info["type"]))
+            infoStr += "%s operating system: %s" % (target, Format.humanize(info["type"]))
 
-                if "distrib" in info:
-                    infoStr += " %s" % Format.humanize(info["distrib"])
+            if "distrib" in info:
+                infoStr += " %s" % Format.humanize(info["distrib"])
 
-                if "release" in info:
-                    infoStr += " %s" % Format.humanize(info["release"])
+            if "release" in info:
+                infoStr += " %s" % Format.humanize(info["release"])
 
-                if "sp" in info:
-                    infoStr += " %s" % Format.humanize(info["sp"])
+            if "sp" in info:
+                infoStr += " %s" % Format.humanize(info["sp"])
 
-                if "codename" in info:
-                    infoStr += " (%s)" % Format.humanize(info["codename"])
+            if "codename" in info:
+                infoStr += " (%s)" % Format.humanize(info["codename"])
 
         if "technology" in info:
-            if conf.api:
-                infoApi["web application technology"] = Format.humanize(info["technology"], ", ")
-            else:
-                infoStr += "\nweb application technology: %s" % Format.humanize(info["technology"], ", ")
+            infoStr += "\nweb application technology: %s" % Format.humanize(info["technology"], ", ")
 
-        if conf.api:
-            return infoApi
-        else:
-            return infoStr.lstrip()
+        return infoStr.lstrip()
 
 class Backend(object):
     @staticmethod
@@ -1039,10 +1029,7 @@ def dataToStdout(data, forceOutput=False, bold=False, contentType=None, status=C
                 logging._acquireLock()
 
             try:
-                if conf.get("api"):
-                    sys.stdout.write(stdoutEncode(clearColors(data)), status, contentType)
-                else:
-                    sys.stdout.write(stdoutEncode(setColor(data, bold=bold) if coloring else clearColors(data)))
+                sys.stdout.write(stdoutEncode(setColor(data, bold=bold) if coloring else clearColors(data)))
             except IOError:
                 pass
             except UnicodeEncodeError:
@@ -1162,7 +1149,7 @@ def readInput(message, default=None, checkBatch=True, boolean=False):
         logger.debug(debugMsg)
 
     if retVal is None:
-        if checkBatch and conf.get("batch") or any(conf.get(_) for _ in ("api", "nonInteractive")):
+        if checkBatch and conf.get("batch") or conf.get("nonInteractive"):
             if isListLike(default):
                 options = ','.join(getUnicode(opt, UNICODE_ENCODING) for opt in default)
             elif default:
@@ -1395,7 +1382,7 @@ def banner():
     This function prints sqlmap banner with its version
     """
 
-    if not any(_ in sys.argv for _ in ("--version", "--api")) and not conf.get("disableBanner"):
+    if "--version" not in sys.argv and not conf.get("disableBanner"):
         result = BANNER
 
         if not IS_TTY or any(_ in sys.argv for _ in ("--disable-coloring", "--disable-colouring")):
@@ -1566,7 +1553,7 @@ def setPaths(rootPath):
 
     # History files
     paths.SQLMAP_HISTORY_PATH = getUnicode(os.path.join(paths.SQLMAP_HOME_PATH, "history"), encoding=sys.getfilesystemencoding() or UNICODE_ENCODING)
-    paths.API_SHELL_HISTORY = os.path.join(paths.SQLMAP_HISTORY_PATH, "api.hst")
+
     paths.OS_SHELL_HISTORY = os.path.join(paths.SQLMAP_HISTORY_PATH, "os.hst")
     paths.SQL_SHELL_HISTORY = os.path.join(paths.SQLMAP_HISTORY_PATH, "sql.hst")
     paths.SQLMAP_SHELL_HISTORY = os.path.join(paths.SQLMAP_HISTORY_PATH, "sqlmap.hst")
