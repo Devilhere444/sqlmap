@@ -817,17 +817,7 @@ EVENTVALIDATION_REGEX = r'(?i)(?P<name>__EVENTVALIDATION[^"]*)[^>]+value="(?P<re
 # Number of rows to generate inside the full union test for limited output (mustn't be too large to prevent payload length problems)
 LIMITED_ROWS_TEST_NUMBER = 15
 
-# Default adapter to use for bottle server
-RESTAPI_DEFAULT_ADAPTER = "wsgiref"
 
-# Default REST-JSON API server listen address
-RESTAPI_DEFAULT_ADDRESS = "127.0.0.1"
-
-# Default REST-JSON API server listen port
-RESTAPI_DEFAULT_PORT = 8775
-
-# Unsupported options by REST-JSON API server
-RESTAPI_UNSUPPORTED_OPTIONS = ("sqlShell", "wizard")
 
 # Use "Supplementary Private Use Area-A"
 INVALID_UNICODE_PRIVATE_AREA = False

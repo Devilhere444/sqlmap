@@ -2394,10 +2394,9 @@ def _mergeOptions(inputOptions, overrideOptions):
         if key not in conf or value not in (None, False) or overrideOptions:
             conf[key] = value
 
-    if not conf.api:
-        for key, value in conf.items():
-            if value is not None:
-                kb.explicitSettings.add(key)
+    for key, value in conf.items():
+        if value is not None:
+            kb.explicitSettings.add(key)
 
     for key, value in defaults.items():
         if hasattr(conf, key) and conf[key] is None:
@@ -2639,9 +2638,7 @@ def _basicOptionValidation():
         errMsg = "switch '--chunked' requires usage of (POST) options/switches '--data', '-r' or '--forms'"
         raise SqlmapSyntaxException(errMsg)
 
-    if conf.api and not conf.configFile:
-        errMsg = "switch '--api' requires usage of option '-c'"
-        raise SqlmapSyntaxException(errMsg)
+
 
     if conf.data and conf.nullConnection:
         errMsg = "option '--data' is incompatible with switch '--null-connection'"
