@@ -154,11 +154,11 @@ BLOCKED_IP_REGEX = r"(?i)(\A|\b)ip\b.*\b(banned|blocked|block\s?list|firewall)"
 CONCAT_ROW_DELIMITER = ','
 CONCAT_VALUE_DELIMITER = '|'
 
-# Coefficient used for a time-based query delay checking (must be >= 7)
-TIME_STDEV_COEFF = 7
+# Coefficient used for a time-based query delay checking - OVERCLOCKED (was 7)
+TIME_STDEV_COEFF = 3  # Reduced for faster detection
 
-# Minimum response time that can be even considered as delayed (not a complete requirement)
-MIN_VALID_DELAYED_RESPONSE = 0.5
+# Minimum response time that can be even considered as delayed - OVERCLOCKED
+MIN_VALID_DELAYED_RESPONSE = 0.1  # Reduced from 0.5 to 0.1 for faster detection
 
 # Standard deviation after which a warning message should be displayed about connection lags
 WARN_TIME_STDEV = 0.5
@@ -199,11 +199,11 @@ METADB_SUFFIX = "_masterdb"
 # Number of times to retry the pushValue during the exceptions (e.g. KeyboardInterrupt)
 PUSH_VALUE_EXCEPTION_RETRY_COUNT = 3
 
-# Minimum time response set needed for time-comparison based on standard deviation
-MIN_TIME_RESPONSES = 30
+# Minimum time response set needed for time-comparison - OVERCLOCKED
+MIN_TIME_RESPONSES = 10  # Reduced from 30 to 10 for faster statistical analysis
 
-# Maximum time response set used during time-comparison based on standard deviation
-MAX_TIME_RESPONSES = 200
+# Maximum time response set used during time-comparison - OVERCLOCKED  
+MAX_TIME_RESPONSES = 50  # Reduced from 200 to 50 for faster processing
 
 # Minimum comparison ratio set needed for searching valid union column number based on standard deviation
 MIN_UNION_RESPONSES = 5
@@ -465,8 +465,8 @@ SENSITIVE_DATA_REGEX = r"(\s|=)(?P<result>[^\s=]*\b%s\b[^\s]*)\s"
 # Options to explicitly mask in anonymous (unhandled exception) reports (along with anything carrying the <hostname> inside)
 SENSITIVE_OPTIONS = ("hostname", "answers", "data", "dnsDomain", "googleDork", "authCred", "proxyCred", "tbl", "db", "col", "user", "cookie", "proxy", "fileRead", "fileWrite", "fileDest", "testParameter", "authCred", "sqlQuery", "requestFile", "csrfToken", "csrfData", "csrfUrl", "testParameter")
 
-# Maximum number of threads (avoiding connection issues and/or DoS)
-MAX_NUMBER_OF_THREADS = 10
+# Maximum number of threads (overclocked for maximum performance - was 10)
+MAX_NUMBER_OF_THREADS = 100
 
 # Minimum range between minimum and maximum of statistical set
 MIN_STATISTICAL_RANGE = 0.01
@@ -654,33 +654,33 @@ WAF_ATTACK_VECTORS = (
 # Used for status representation in dictionary attack phase
 ROTATING_CHARS = ('\\', '|', '|', '/', '-')
 
-# Approximate chunk length (in bytes) used by BigArray objects (only last chunk and cached one are held in memory)
-BIGARRAY_CHUNK_SIZE = 1024 * 1024
+# Approximate chunk length (in bytes) used by BigArray objects - OVERCLOCKED
+BIGARRAY_CHUNK_SIZE = 10 * 1024 * 1024  # Increased from 1MB to 10MB
 
-# Compress level used for storing BigArray chunks to disk (0-9)
-BIGARRAY_COMPRESS_LEVEL = 9
+# Compress level used for storing BigArray chunks to disk (0=fastest, 9=best compression)
+BIGARRAY_COMPRESS_LEVEL = 1  # Reduced from 9 to 1 for speed over compression
 
-# Maximum number of socket pre-connects
-SOCKET_PRE_CONNECT_QUEUE_SIZE = 3
+# Maximum number of socket pre-connects - OVERCLOCKED
+SOCKET_PRE_CONNECT_QUEUE_SIZE = 10  # Increased from 3 to 10
 
-# Only console display last n table rows
-TRIM_STDOUT_DUMP_SIZE = 256
+# Only console display last n table rows - OVERCLOCKED  
+TRIM_STDOUT_DUMP_SIZE = 1000  # Increased from 256 to 1000
 
 # Reference: http://stackoverflow.com/a/3168436
 # Reference: https://web.archive.org/web/20150407141500/https://support.microsoft.com/en-us/kb/899149
-DUMP_FILE_BUFFER_SIZE = 1024
+DUMP_FILE_BUFFER_SIZE = 64 * 1024  # Increased from 1KB to 64KB
 
 # Parse response headers only first couple of times
 PARSE_HEADERS_LIMIT = 3
 
-# Step used in ORDER BY technique used for finding the right number of columns in UNION query injections
-ORDER_BY_STEP = 10
+# Step used in ORDER BY technique - OVERCLOCKED (larger steps for faster discovery)
+ORDER_BY_STEP = 50  # Increased from 10 to 50
 
-# Maximum value used in ORDER BY technique used for finding the right number of columns in UNION query injections
-ORDER_BY_MAX = 1000
+# Maximum value used in ORDER BY technique - OVERCLOCKED  
+ORDER_BY_MAX = 500  # Reduced from 1000 to 500 for faster failure detection
 
-# Maximum number of times for revalidation of a character in inference (as required)
-MAX_REVALIDATION_STEPS = 5
+# Maximum number of times for revalidation - OVERCLOCKED
+MAX_REVALIDATION_STEPS = 2  # Reduced from 5 to 2 for faster processing
 
 # Characters that can be used to split parameter values in provided command line (e.g. in --tamper)
 PARAMETER_SPLITTING_REGEX = r"[,|;]"

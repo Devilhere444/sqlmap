@@ -154,8 +154,12 @@ def runThreads(numThreads, threadFunction, cleanupFunction=None, forwardExceptio
                             break
 
             if numThreads == 1:
-                warnMsg = "running in a single-thread mode. This could take a while"
+                warnMsg = "running in a single-thread mode. This could take a while. "
+                warnMsg += "Consider using --threads=100 for maximum performance"
                 logger.warning(warnMsg)
+            elif numThreads > 50:
+                infoMsg = "OVERCLOCKED MODE: Using %d threads for maximum performance" % numThreads
+                logger.info(infoMsg)
 
         if numThreads > 1:
             if startThreadMsg:
