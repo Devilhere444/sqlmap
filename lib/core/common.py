@@ -43,8 +43,8 @@ from optparse import OptionValueError
 from xml.sax import parse
 from xml.sax import SAXParseException
 
-from extra.beep.beep import beep
-from extra.cloak.cloak import decloak
+from lib.core.compat_stubs import beep
+from lib.core.compat_stubs import decloak
 from lib.core.bigarray import BigArray
 from lib.core.compat import cmp
 from lib.core.compat import LooseVersion

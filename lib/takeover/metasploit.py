@@ -17,8 +17,7 @@ import time
 
 from subprocess import PIPE
 
-from extra.cloak.cloak import cloak
-from extra.cloak.cloak import decloak
+from lib.core.compat_stubs import decloak
 from lib.core.common import dataToStdout
 from lib.core.common import Backend
 from lib.core.common import getLocalIP

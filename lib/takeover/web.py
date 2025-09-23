@@ -11,7 +11,7 @@ import posixpath
 import re
 import tempfile
 
-from extra.cloak.cloak import decloak
+from lib.core.compat_stubs import decloak
 from lib.core.agent import agent
 from lib.core.common import arrayizeValue
 from lib.core.common import Backend
