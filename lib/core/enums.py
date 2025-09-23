@@ -417,7 +417,6 @@ class AUTOCOMPLETE_TYPE(object):
     SQL = 0
     OS = 1
     SQLMAP = 2
-    API = 3
 
 class NOTE(object):
     FALSE_POSITIVE_OR_UNEXPLOITABLE = "false positive or unexploitable"
