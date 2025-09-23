@@ -158,17 +158,7 @@ def main():
         if checkPipedInput():
             conf.batch = True
 
-        if conf.get("api"):
-            # heavy imports
-            from lib.utils.api import StdDbOut
-            from lib.utils.api import setRestAPILog
 
-            # Overwrite system standard output and standard error to write
-            # to an IPC database
-            sys.stdout = StdDbOut(conf.taskid, messagetype="stdout")
-            sys.stderr = StdDbOut(conf.taskid, messagetype="stderr")
-
-            setRestAPILog()
 
         conf.showTime = True
         dataToStdout("[!] legal disclaimer: %s\n\n" % LEGAL_DISCLAIMER, forceOutput=True)
@@ -548,7 +538,7 @@ def main():
         errMsg = maskSensitiveData(errMsg)
         excMsg = maskSensitiveData(excMsg)
 
-        if conf.get("api") or not valid or kb.get("lastCtrlCTime"):
+        if not valid or kb.get("lastCtrlCTime"):
             logger.critical("%s\n%s" % (errMsg, excMsg))
         else:
             logger.critical(errMsg)
@@ -593,8 +583,7 @@ def main():
                 errMsg = getSafeExString(ex)
                 logger.critical(errMsg)
 
-        if conf.get("api"):
-            conf.databaseCursor.disconnect()
+
 
         if conf.get("dumper"):
             conf.dumper.flush()
