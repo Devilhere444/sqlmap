@@ -3611,6 +3611,48 @@ def setOverclock():
     warnMsg += "Use at your own risk!"
     logger.warning(warnMsg)
 
+def setTurbo():
+    """
+    TURBO MODE: Extreme overclocking for maximum speed at all costs (--turbo)
+    """
+    
+    infoMsg = "TURBO MODE activated - EXTREME overclocking with all safety features disabled"
+    logger.info(infoMsg)
+    
+    # Apply overclock settings first
+    setOverclock()
+    
+    # EXTREME SETTINGS - DANGER ZONE
+    conf.threads = 200        # Double the overclock thread count
+    conf.timeSec = 0.5        # Even faster time-based detection
+    conf.timeout = 3          # Extremely short timeout
+    conf.delay = 0            # Absolutely no delays
+    conf.retries = 0          # No retries at all - fail fast
+    
+    # AGGRESSIVE LEVEL AND RISK
+    if not hasattr(conf, 'level') or conf.level < 3:
+        conf.level = 3        # Higher test level for thorough but fast testing
+    if not hasattr(conf, 'risk') or conf.risk < 2:  
+        conf.risk = 2         # Higher risk for more injection attempts
+    
+    # FORCE ALL OPTIMIZATIONS
+    conf.predictOutput = True
+    conf.keepAlive = True
+    conf.nullConnection = True
+    conf.eta = True           # Show ETA for faster feedback
+    
+    # BYPASS ALL SAFETY MECHANISMS
+    kb.forceThreads = True
+    kb.skipOthers = True      # Skip redundant tests
+    
+    # EXTREME PERFORMANCE SETTINGS
+    conf.safeFreq = 0
+    conf.csrfRetries = 0
+    
+    warnMsg = "TURBO MODE: ALL SAFETY FEATURES DISABLED! Using 200 threads with "
+    warnMsg += "extremely aggressive settings. Use only on isolated test environments!"
+    logger.critical(warnMsg)
+
 def saveConfig(conf, filename):
     """
     Saves conf to configuration filename

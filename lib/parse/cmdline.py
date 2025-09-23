@@ -312,6 +312,9 @@ def cmdLineParser(argv=None):
         optimization.add_argument("--overclock", dest="overclock", action="store_true",
             help="OVERCLOCK MODE: Maximum performance with 100 threads, aggressive timeouts, and disabled safety checks")
 
+        optimization.add_argument("--turbo", dest="turbo", action="store_true",
+            help="TURBO MODE: Extreme overclocking with all safety features disabled for maximum speed")
+
         optimization.add_argument("--predict-output", dest="predictOutput", action="store_true",
             help="Predict common queries output")
 

@@ -56,6 +56,7 @@ from lib.core.common import saveConfig
 from lib.core.common import setColor
 from lib.core.common import setOptimize
 from lib.core.common import setOverclock
+from lib.core.common import setTurbo
 from lib.core.common import setPaths
 from lib.core.common import singleTimeWarnMessage
 from lib.core.common import urldecode
@@ -1799,6 +1800,9 @@ def _cleanupOptions():
 
     if conf.overclock:
         setOverclock()
+        
+    if conf.turbo:
+        setTurbo()
 
     if conf.os:
         conf.os = conf.os.capitalize()

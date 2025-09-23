@@ -208,8 +208,8 @@ MAX_TIME_RESPONSES = 50  # Reduced from 200 to 50 for faster processing
 # Minimum comparison ratio set needed for searching valid union column number based on standard deviation
 MIN_UNION_RESPONSES = 5
 
-# After these number of blanks at the end inference should stop (just in case)
-INFERENCE_BLANK_BREAK = 5
+# After these number of blanks at the end inference should stop - OVERCLOCKED
+INFERENCE_BLANK_BREAK = 2  # Reduced from 5 to 2 for faster termination
 
 # Use this replacement character for cases when inference is not able to retrieve the proper character value
 INFERENCE_UNKNOWN_CHAR = '?'
@@ -466,7 +466,7 @@ SENSITIVE_DATA_REGEX = r"(\s|=)(?P<result>[^\s=]*\b%s\b[^\s]*)\s"
 SENSITIVE_OPTIONS = ("hostname", "answers", "data", "dnsDomain", "googleDork", "authCred", "proxyCred", "tbl", "db", "col", "user", "cookie", "proxy", "fileRead", "fileWrite", "fileDest", "testParameter", "authCred", "sqlQuery", "requestFile", "csrfToken", "csrfData", "csrfUrl", "testParameter")
 
 # Maximum number of threads (overclocked for maximum performance - was 10)
-MAX_NUMBER_OF_THREADS = 100
+MAX_NUMBER_OF_THREADS = 200  # Increased to support Turbo mode
 
 # Minimum range between minimum and maximum of statistical set
 MIN_STATISTICAL_RANGE = 0.01
