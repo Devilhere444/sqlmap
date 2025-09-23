@@ -416,9 +416,122 @@ HTML_TEMPLATE = '''
             gap: 20px;
         }
 
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            animation: statPulse 2s infinite;
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            box-shadow: 0 4px 15px rgba(132, 250, 176, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .network-viz {
+            background: #1a202c;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .network-node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .network-connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, transparent, #667eea);
+            animation: dataFlow 3s infinite;
+        }
+
+        .vulnerability-heatmap {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            margin: 15px 0;
+        }
+
+        .heat-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            animation: heatPulse 4s infinite;
+        }
+
+        .heat-low { background: #68d391; }
+        .heat-medium { background: #f6ad55; }
+        .heat-high { background: #fc8181; }
+        .heat-critical { background: #e53e3e; animation-duration: 1s; }
+
+        @keyframes statPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.8); }
+        }
+
+        @keyframes dataFlow {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        @keyframes heatPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
             }
             
             .header h1 {
@@ -477,6 +590,47 @@ HTML_TEMPLATE = '''
 
             <div id="progress-section" class="progress-section">
                 <h3>⚡ Attack Progress</h3>
+                
+                <!-- Statistics Dashboard -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-value" id="requests-count">0</div>
+                        <div class="stat-label">Requests Sent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="vuln-count">0</div>
+                        <div class="stat-label">Vulnerabilities</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="success-rate">0%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="elapsed-time">00:00</div>
+                        <div class="stat-label">Elapsed Time</div>
+                    </div>
+                </div>
+                
+                <!-- Network Visualization -->
+                <div class="network-viz" id="network-viz">
+                    <div style="color: #e2e8f0; text-align: center; padding: 20px;">
+                        <h4>🌐 Network Attack Visualization</h4>
+                        <div id="network-container" style="position: relative; height: 120px;"></div>
+                    </div>
+                </div>
+                
+                <!-- Vulnerability Heatmap -->
+                <div style="background: #f7fafc; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <h4>🔥 Vulnerability Heatmap</h4>
+                    <div class="vulnerability-heatmap" id="vuln-heatmap"></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 10px;">
+                        <span>🟢 Low</span>
+                        <span>🟡 Medium</span>
+                        <span>🟠 High</span>
+                        <span>🔴 Critical</span>
+                    </div>
+                </div>
+                
                 <div class="status-display" id="status-text">Ready to start...</div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -500,6 +654,9 @@ HTML_TEMPLATE = '''
     <script>
         let attackRunning = false;
         let statusInterval;
+        let startTime;
+        let requestCount = 0;
+        let vulnCount = 0;
 
         // DOM elements
         const startBtn = document.getElementById('start-btn');
@@ -512,9 +669,77 @@ HTML_TEMPLATE = '''
         const logsSection = document.getElementById('logs-section');
         const resultsContainer = document.getElementById('results-container');
 
+        // Stat elements
+        const requestsCount = document.getElementById('requests-count');
+        const vulnCountEl = document.getElementById('vuln-count');
+        const successRate = document.getElementById('success-rate');
+        const elapsedTime = document.getElementById('elapsed-time');
+        const networkContainer = document.getElementById('network-container');
+        const vulnHeatmap = document.getElementById('vuln-heatmap');
+
         // Event listeners
         startBtn.addEventListener('click', startAttack);
         stopBtn.addEventListener('click', stopAttack);
+
+        // Initialize visualizations
+        initializeVisuals();
+
+        function initializeVisuals() {
+            // Initialize vulnerability heatmap
+            for (let i = 0; i < 50; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'heat-cell heat-low';
+                vulnHeatmap.appendChild(cell);
+            }
+
+            // Initialize network nodes
+            createNetworkVisualization();
+        }
+
+        function createNetworkVisualization() {
+            const nodes = [
+                { id: 'client', x: 20, y: 50, label: '🖥️' },
+                { id: 'target', x: 80, y: 50, label: '🎯' },
+                { id: 'db', x: 50, y: 20, label: '🔗' }
+            ];
+
+            nodes.forEach(node => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'network-node';
+                nodeEl.style.left = node.x + '%';
+                nodeEl.style.top = node.y + '%';
+                nodeEl.textContent = node.label;
+                nodeEl.title = node.id;
+                networkContainer.appendChild(nodeEl);
+            });
+
+            // Create connections
+            const connections = [
+                { from: [20, 50], to: [80, 50] },
+                { from: [50, 50], to: [50, 20] }
+            ];
+
+            connections.forEach((conn, index) => {
+                const line = document.createElement('div');
+                line.className = 'network-connection';
+                const width = Math.abs(conn.to[0] - conn.from[0]);
+                const height = Math.abs(conn.to[1] - conn.from[1]);
+                
+                if (width > height) {
+                    line.style.width = width + '%';
+                    line.style.left = Math.min(conn.from[0], conn.to[0]) + '%';
+                    line.style.top = conn.from[1] + '%';
+                } else {
+                    line.style.height = height + '%';
+                    line.style.width = '2px';
+                    line.style.left = conn.from[0] + '%';
+                    line.style.top = Math.min(conn.from[1], conn.to[1]) + '%';
+                }
+                
+                line.style.animationDelay = (index * 0.5) + 's';
+                networkContainer.appendChild(line);
+            });
+        }
 
         async function startAttack() {
             const url = document.getElementById('target-url').value;
@@ -544,6 +769,10 @@ HTML_TEMPLATE = '''
                 
                 if (result.success) {
                     attackRunning = true;
+                    startTime = Date.now();
+                    requestCount = 0;
+                    vulnCount = 0;
+                    
                     startBtn.style.display = 'none';
                     stopBtn.style.display = 'inline-block';
                     progressSection.style.display = 'block';
@@ -551,12 +780,55 @@ HTML_TEMPLATE = '''
                     
                     // Start status polling
                     statusInterval = setInterval(updateStatus, 1000);
+                    
+                    // Start visual updates
+                    startVisualEffects();
                 } else {
                     alert('Failed to start attack: ' + result.error);
                 }
             } catch (error) {
                 alert('Error starting attack: ' + error.message);
             }
+        }
+
+        function startVisualEffects() {
+            // Animate heatmap
+            const cells = vulnHeatmap.children;
+            let cellIndex = 0;
+            
+            const heatmapAnimation = setInterval(() => {
+                if (!attackRunning) {
+                    clearInterval(heatmapAnimation);
+                    return;
+                }
+                
+                if (cellIndex < cells.length) {
+                    const cell = cells[cellIndex];
+                    const heatLevels = ['heat-low', 'heat-medium', 'heat-high', 'heat-critical'];
+                    const randomHeat = heatLevels[Math.floor(Math.random() * 4)];
+                    
+                    cell.className = 'heat-cell ' + randomHeat;
+                    cellIndex++;
+                }
+                
+                // Simulate requests
+                requestCount += Math.floor(Math.random() * 3) + 1;
+                requestsCount.textContent = requestCount;
+                
+                // Update network activity
+                animateNetworkNodes();
+                
+            }, 500);
+        }
+
+        function animateNetworkNodes() {
+            const nodes = networkContainer.querySelectorAll('.network-node');
+            nodes.forEach(node => {
+                node.style.transform = 'scale(' + (0.8 + Math.random() * 0.4) + ')';
+                setTimeout(() => {
+                    node.style.transform = 'scale(1)';
+                }, 200);
+            });
         }
 
         async function stopAttack() {
@@ -580,6 +852,23 @@ HTML_TEMPLATE = '''
                 statusText.textContent = status.current_step;
                 progressFill.style.width = status.progress + '%';
                 progressPercent.textContent = status.progress + '%';
+
+                // Update statistics
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    elapsedTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+
+                // Update vulnerability count and success rate
+                if (status.results && status.results.length > 0) {
+                    vulnCount = status.results.filter(r => r.type === 'vulnerability').length;
+                    vulnCountEl.textContent = vulnCount;
+                    
+                    const rate = requestCount > 0 ? Math.floor((vulnCount / requestCount) * 100) : 0;
+                    successRate.textContent = rate + '%';
+                }
 
                 // Update logs
                 if (status.logs && status.logs.length > 0) {
@@ -623,6 +912,10 @@ HTML_TEMPLATE = '''
                     ${result.technique ? 'Technique: ' + result.technique + ', ' : ''}
                     ${result.name ? 'Name: ' + result.name + ', ' : ''}
                     ${result.columns ? 'Columns: [' + result.columns.join(', ') + ']' : ''}
+                    ${result.payload ? 'Payload: ' + result.payload + ', ' : ''}
+                    ${result.version ? 'Version: ' + result.version + ', ' : ''}
+                    ${result.entries ? 'Entries: ' + result.entries + ', ' : ''}
+                    ${result.sample ? 'Sample: ' + result.sample : ''}
                 </div>`
             ).join('');
         }
