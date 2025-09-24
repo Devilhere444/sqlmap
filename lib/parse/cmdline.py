@@ -866,14 +866,7 @@ def cmdLineParser(argv=None):
         parser.add_argument("--gui", dest="gui", action="store_true",
             help=SUPPRESS)
 
-        parser.add_argument("--webui", dest="webui", action="store_true",
-            help="Launch web-based user interface")
 
-        parser.add_argument("--port", dest="port", type=int,
-            help="Port for web interface (default: 8080)")
-
-        parser.add_argument("--host", dest="host",
-            help="Host for web interface (default: 127.0.0.1)")
 
         parser.add_argument("--smoke-test", dest="smokeTest", action="store_true",
             help=SUPPRESS)
@@ -943,26 +936,6 @@ def cmdLineParser(argv=None):
             from lib.core.gui import runGui
 
             runGui(parser)
-
-            raise SqlmapSilentQuitException
-
-        elif "--webui" in argv:
-            from lib.core.webui import runWebUI
-
-            # Parse additional arguments for web UI
-            port = 8080
-            host = '127.0.0.1'
-            
-            for i, arg in enumerate(argv):
-                if arg == "--port" and i + 1 < len(argv):
-                    try:
-                        port = int(argv[i + 1])
-                    except ValueError:
-                        pass
-                elif arg == "--host" and i + 1 < len(argv):
-                    host = argv[i + 1]
-
-            runWebUI(port=port, host=host)
 
             raise SqlmapSilentQuitException
 
@@ -1140,9 +1113,8 @@ def cmdLineParser(argv=None):
         else:
             args.stdinPipe = None
 
-        if not any((args.direct, args.url, args.logFile, args.bulkFile, args.googleDork, args.configFile, args.requestFile, args.updateAll, args.smokeTest, args.vulnTest, args.wizard, args.dependencies, args.purge, args.listTampers, args.hashFile, args.stdinPipe, args.webui)):
+        if not any((args.direct, args.url, args.logFile, args.bulkFile, args.googleDork, args.configFile, args.requestFile, args.updateAll, args.smokeTest, args.vulnTest, args.wizard, args.dependencies, args.purge, args.listTampers, args.hashFile, args.stdinPipe)):
             errMsg = "missing a mandatory option. "
-            errMsg += "🌐 For modern web-based interface, use --webui. "
             errMsg += "For command-line usage: (-d, -u, -l, -m, -r, -g, -c, --wizard, --shell, --update, --purge, --list-tampers or --dependencies). "
             errMsg += "Use -h for basic and -hh for advanced help\n"
             parser.error(errMsg)
