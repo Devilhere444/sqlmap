@@ -95,73 +95,238 @@ def stop_attack():
     return json.dumps({'success': True, 'message': 'Attack stopped'})
 
 def run_sqlmap_attack(options):
-    """Run SQLMap attack in background thread"""
+    """Run actual SQLMap attack in background thread"""
     global attack_status
     
     try:
-        # For now, simulate attack progress (real integration can be added later)
-        # This avoids complex import dependencies during initial implementation
+        # Import required SQLMap modules for real execution
+        from lib.core.data import conf, kb, cmdLineOptions, paths
+        from lib.core.option import initOptions, init
+        from lib.controller.controller import start
+        from lib.core.common import setPaths, dataToStdout
+        from lib.core.settings import VERSION
+        from lib.parse.cmdline import cmdLineParser
+        from lib.core.datatype import AttribDict
+        import tempfile
+        import os
         
-        # Simulate attack progress
-        steps = [
-            'Checking connection to target',
-            'Testing parameter vulnerabilities', 
-            'Identifying injection points',
-            'Enumerating database information',
-            'Extracting data',
-            'Finalizing results'
-        ]
+        # Reset and configure SQLMap for web execution
+        attack_status['current_step'] = 'Initializing SQLMap engine...'
+        attack_status['progress'] = 5
         
-        for i, step in enumerate(steps):
+        # Log initialization
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'message': f"Starting real SQLMap attack against {options.get('url', 'target')}",
+            'level': 'INFO'
+        }
+        attack_status['logs'].append(log_entry)
+        
+        # Set the SQLMap root path
+        setPaths(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        
+        # Create a minimal options object for SQLMap
+        web_options = AttribDict()
+        web_options.url = options.get('url', '')
+        web_options.method = options.get('method', 'GET').upper()
+        web_options.data = options.get('data', '') if options.get('data') else None
+        web_options.cookie = options.get('cookie', '') if options.get('cookie') else None  
+        web_options.technique = options.get('technique', 'BEUSTQ')
+        web_options.level = int(options.get('level', 1))
+        web_options.risk = int(options.get('risk', 1))
+        web_options.threads = max(1, min(int(options.get('threads', 1)), 5))  # Limit threads for web
+        web_options.batch = True  # Non-interactive mode
+        web_options.verbose = 1
+        web_options.getAll = options.get('getAll', False)
+        web_options.getDbs = options.get('getDbs', False)
+        web_options.getTables = options.get('getTables', False)
+        web_options.getColumns = options.get('getColumns', False)
+        web_options.dumpAll = options.get('dumpAll', False)
+        web_options.dbms = options.get('dbms', '') if options.get('dbms') else None
+        web_options.randomAgent = options.get('randomAgent', False)
+        web_options.proxy = options.get('proxy', '') if options.get('proxy') else None
+        web_options.timeout = max(10, min(int(options.get('timeout', 30)), 120))  # Reasonable timeout
+        web_options.retries = max(1, min(int(options.get('retries', 3)), 10))
+        web_options.delay = max(0, min(float(options.get('delay', 0)), 10))
+        
+        # Additional safety options for web execution
+        web_options.checkInternet = False  # Skip internet check for web execution
+        web_options.skipUrlEncode = False
+        web_options.forms = False
+        web_options.crawlDepth = 0
+        web_options.osShell = False  # Disable shell access for security
+        web_options.osPwn = False    # Disable system exploitation
+        web_options.osCmd = False    # Disable OS command execution
+        web_options.regRead = False  # Disable registry access
+        web_options.regAdd = False
+        web_options.regDel = False
+        
+        # Set temporary directory for this session
+        web_options.tmpDir = tempfile.mkdtemp(prefix='sqlmap_web_')
+        
+        if not attack_status['running']:
+            return
+            
+        attack_status['current_step'] = 'Configuring attack parameters...'
+        attack_status['progress'] = 10
+        
+        # Clear and reset configuration
+        cmdLineOptions.clear()
+        kb.clear() 
+        conf.clear()
+        
+        # Initialize SQLMap with web options
+        cmdLineOptions.update(web_options.__dict__)
+        
+        # Initialize configuration
+        initOptions(web_options)
+        init()
+        
+        if not attack_status['running']:
+            return
+            
+        attack_status['current_step'] = 'Starting vulnerability scan...'
+        attack_status['progress'] = 20
+        
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'message': f"Configured attack: Level {web_options.level}, Risk {web_options.risk}, Technique {web_options.technique}",
+            'level': 'INFO'
+        }
+        attack_status['logs'].append(log_entry)
+        
+        # Execute the actual SQLMap attack
+        try:
+            attack_status['current_step'] = 'Running SQL injection tests...'
+            attack_status['progress'] = 30
+            
+            # Start the real SQLMap attack
+            result = start()
+            
             if not attack_status['running']:
-                break
+                return
                 
-            attack_status['current_step'] = step
-            attack_status['progress'] = int((i + 1) / len(steps) * 100)
+            attack_status['progress'] = 80
+            attack_status['current_step'] = 'Processing results...'
             
-            # Add log entry
-            log_entry = {
-                'timestamp': datetime.now().isoformat(),
-                'message': f"{step} for {options.get('url', 'target')}",
-                'level': 'INFO'
-            }
-            attack_status['logs'].append(log_entry)
+            # Extract real results from SQLMap execution
+            results = []
             
-            # Simulate processing time with some variation
-            time.sleep(1.5 + (i * 0.5))
-        
-        if attack_status['running']:
-            attack_status['current_step'] = 'Attack completed successfully!'
-            attack_status['progress'] = 100
-            attack_status['running'] = False
+            # Check for successful injections
+            if hasattr(kb, 'injection') and kb.injection:
+                for injection in kb.injection:
+                    if hasattr(injection, 'parameter'):
+                        results.append({
+                            'type': 'vulnerability',
+                            'parameter': injection.parameter,
+                            'technique': ','.join(injection.data.keys()) if hasattr(injection, 'data') else 'Unknown',
+                            'place': getattr(injection, 'place', 'Unknown'),
+                            'dbms': getattr(injection, 'dbms', 'Unknown')
+                        })
             
-            # Add sample results based on target
-            target_url = options.get('url', '')
-            attack_status['results'] = [
-                {'type': 'vulnerability', 'parameter': 'id', 'technique': 'boolean-based blind', 'payload': '1 AND 1=1'},
-                {'type': 'injection_point', 'parameter': 'id', 'type': 'GET', 'technique': 'B'},
-                {'type': 'database', 'name': 'test_db', 'version': 'MySQL 5.7.34'},
-                {'type': 'table', 'name': 'users', 'columns': ['id', 'username', 'password', 'email']},
-                {'type': 'data', 'table': 'users', 'entries': 3, 'sample': 'admin:5d41402abc4b2a76b9719d911017c592'}
-            ]
+            # Check for database information
+            if hasattr(kb, 'data') and kb.data:
+                if hasattr(kb.data, 'banner') and kb.data.banner:
+                    results.append({
+                        'type': 'database_info',
+                        'banner': kb.data.banner
+                    })
+                    
+                if hasattr(kb.data, 'currentUser') and kb.data.currentUser:
+                    results.append({
+                        'type': 'current_user',
+                        'user': kb.data.currentUser
+                    })
+                    
+                if hasattr(kb.data, 'currentDb') and kb.data.currentDb:
+                    results.append({
+                        'type': 'current_database',
+                        'database': kb.data.currentDb
+                    })
+                    
+                if hasattr(kb.data, 'cachedDbs') and kb.data.cachedDbs:
+                    results.append({
+                        'type': 'databases',
+                        'databases': list(kb.data.cachedDbs)
+                    })
+                    
+                if hasattr(kb.data, 'cachedTables') and kb.data.cachedTables:
+                    for db, tables in kb.data.cachedTables.items():
+                        results.append({
+                            'type': 'tables',
+                            'database': db,
+                            'tables': list(tables)
+                        })
+                        
+                if hasattr(kb.data, 'cachedColumns') and kb.data.cachedColumns:
+                    for table, columns in kb.data.cachedColumns.items():
+                        results.append({
+                            'type': 'columns',
+                            'table': table,
+                            'columns': list(columns.keys()) if isinstance(columns, dict) else list(columns)
+                        })
+                        
+                if hasattr(kb.data, 'dumpedTable') and kb.data.dumpedTable:
+                    for table, entries in kb.data.dumpedTable.items():
+                        if entries:
+                            results.append({
+                                'type': 'data_dump',
+                                'table': table,
+                                'entries': len(entries),
+                                'sample': str(entries[0]) if entries else 'No data'
+                            })
             
-            # Add completion log
-            completion_log = {
-                'timestamp': datetime.now().isoformat(),
-                'message': f'✅ Attack completed - Found {len(attack_status["results"])} results',
-                'level': 'SUCCESS'
-            }
-            attack_status['logs'].append(completion_log)
+            # If no specific results but successful execution
+            if not results and result:
+                results.append({
+                    'type': 'scan_complete',
+                    'message': 'Scan completed successfully but no vulnerabilities found'
+                })
+            
+            # Update attack status with real results
+            if attack_status['running']:
+                attack_status['current_step'] = 'Attack completed successfully!'
+                attack_status['progress'] = 100
+                attack_status['running'] = False
+                attack_status['results'] = results
+                
+                completion_log = {
+                    'timestamp': datetime.now().isoformat(),
+                    'message': f'✅ Real SQLMap attack completed - Found {len(results)} results',
+                    'level': 'SUCCESS'
+                }
+                attack_status['logs'].append(completion_log)
+                
+                # Log each result
+                for result_item in results:
+                    result_log = {
+                        'timestamp': datetime.now().isoformat(),
+                        'message': f"📋 {result_item['type']}: {str(result_item)[:100]}...",
+                        'level': 'SUCCESS'
+                    }
+                    attack_status['logs'].append(result_log)
+            
+        except Exception as attack_ex:
+            if attack_status['running']:
+                attack_status['running'] = False
+                attack_status['current_step'] = f'Attack failed: {str(attack_ex)}'
+                error_log = {
+                    'timestamp': datetime.now().isoformat(),
+                    'message': f'❌ SQLMap attack failed: {str(attack_ex)}',
+                    'level': 'ERROR'
+                }
+                attack_status['logs'].append(error_log)
             
     except Exception as ex:
-        attack_status['running'] = False
-        attack_status['current_step'] = f'Error: {str(ex)}'
-        error_log = {
-            'timestamp': datetime.now().isoformat(),
-            'message': f'❌ Attack failed: {str(ex)}',
-            'level': 'ERROR'
-        }
-        attack_status['logs'].append(error_log)
+        if attack_status['running']:
+            attack_status['running'] = False
+            attack_status['current_step'] = f'Initialization error: {str(ex)}'
+            error_log = {
+                'timestamp': datetime.now().isoformat(),
+                'message': f'❌ Failed to initialize SQLMap engine: {str(ex)}',
+                'level': 'ERROR'
+            }
+            attack_status['logs'].append(error_log)
 
 # HTML Template with modern design and animations
 HTML_TEMPLATE = '''
@@ -564,6 +729,22 @@ HTML_TEMPLATE = '''
                 
                 <div class="grid">
                     <div class="form-group">
+                        <label for="method">HTTP Method</label>
+                        <select id="method" class="form-control">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data">POST Data (optional)</label>
+                        <input type="text" id="data" class="form-control" 
+                               placeholder="param1=value1&param2=value2">
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
                         <label for="technique">Injection Technique</label>
                         <select id="technique" class="form-control">
                             <option value="BEUSTQ">All Techniques</option>
@@ -576,9 +757,91 @@ HTML_TEMPLATE = '''
                     </div>
                     
                     <div class="form-group">
+                        <label for="level">Test Level (1-5)</label>
+                        <select id="level" class="form-control">
+                            <option value="1">1 - Basic</option>
+                            <option value="2">2 - Cookie</option>
+                            <option value="3">3 - User-Agent/Referer</option>
+                            <option value="4">4 - X-Forwarded-For</option>
+                            <option value="5">5 - Host</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="risk">Risk Level (1-3)</label>
+                        <select id="risk" class="form-control">
+                            <option value="1">1 - Safe</option>
+                            <option value="2">2 - Medium</option>
+                            <option value="3">3 - High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="threads">Threads</label>
                         <input type="number" id="threads" class="form-control" 
-                               min="1" max="50" value="10">
+                               min="1" max="10" value="1">
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="cookie">Cookie (optional)</label>
+                        <input type="text" id="cookie" class="form-control" 
+                               placeholder="PHPSESSID=abc123; auth=xyz789">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="proxy">Proxy (optional)</label>
+                        <input type="text" id="proxy" class="form-control" 
+                               placeholder="http://127.0.0.1:8080">
+                    </div>
+                </div>
+                
+                <h4>🔍 Attack Options</h4>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="getDbs"> Enumerate databases
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="getTables"> Enumerate tables
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="getColumns"> Enumerate columns
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="dumpAll"> Dump all data
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="randomAgent"> Use random User-Agent
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="dbms">Force DBMS</label>
+                        <select id="dbms" class="form-control">
+                            <option value="">Auto-detect</option>
+                            <option value="MySQL">MySQL</option>
+                            <option value="PostgreSQL">PostgreSQL</option>
+                            <option value="Oracle">Oracle</option>
+                            <option value="Microsoft SQL Server">SQL Server</option>
+                            <option value="SQLite">SQLite</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -743,8 +1006,20 @@ HTML_TEMPLATE = '''
 
         async function startAttack() {
             const url = document.getElementById('target-url').value;
+            const method = document.getElementById('method').value;
+            const data = document.getElementById('data').value;
             const technique = document.getElementById('technique').value;
+            const level = parseInt(document.getElementById('level').value);
+            const risk = parseInt(document.getElementById('risk').value);
             const threads = parseInt(document.getElementById('threads').value);
+            const cookie = document.getElementById('cookie').value;
+            const proxy = document.getElementById('proxy').value;
+            const getDbs = document.getElementById('getDbs').checked;
+            const getTables = document.getElementById('getTables').checked;
+            const getColumns = document.getElementById('getColumns').checked;
+            const dumpAll = document.getElementById('dumpAll').checked;
+            const randomAgent = document.getElementById('randomAgent').checked;
+            const dbms = document.getElementById('dbms').value;
 
             if (!url.trim()) {
                 alert('Please enter a target URL');
@@ -753,8 +1028,20 @@ HTML_TEMPLATE = '''
 
             const payload = {
                 url: url,
+                method: method,
+                data: data,
                 technique: technique,
+                level: level,
+                risk: risk,
                 threads: threads,
+                cookie: cookie,
+                proxy: proxy,
+                getDbs: getDbs,
+                getTables: getTables,
+                getColumns: getColumns,
+                dumpAll: dumpAll,
+                randomAgent: randomAgent,
+                dbms: dbms,
                 verbose: 2
             };
 
